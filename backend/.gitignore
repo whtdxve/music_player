@@ -45,6 +45,8 @@ lerna-debug.log*
 # temp directory
 .temp
 .tmp
+public/covers
+music
 
 # Runtime data
 pids
