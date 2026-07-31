@@ -9,6 +9,9 @@ async function bootstrap() {
   // Настройка движка шаблонов Handlebars
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.useStaticAssets(join(__dirname, '..', 'public'));
+  app.enableCors({
+    origin: 'http://localhost:5173',
+  });
   app.setViewEngine('hbs');
 
   await app.listen(process.env.PORT ?? 3000);

@@ -1,0 +1,64 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+// TODO: сделать дефолтное значение для всех опциональных полей по типу unkown artist, но надо понять как менять его если в файле оно изменилось
+// TODO: типы релизов
+// TODO: посмотреть какие есть метаданные у аудиофайлов и добавить все что нужно
+model Release {
+  id        Int      @id @default(autoincrement())
+  title     String
+  createdAt DateTime @default(now())
+  artistId  Int
+  artist    Artist   @relation(fields: [artistId], references: [id])
+  tracks    Track[]
+}
+
+model Track {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  artistId   Int
+  artists    Artist   @relation(fields: [artistId], references: [id])
+  releaseId  Int
+  releases   Release  @relation(fields: [releaseId], references: [id])
+  metadataId Int      @unique
+  metadata   Metadata @relation(fields: [metadataId], references: [id])
+}
+
+model Metadata {
+  id            Int      @id @default(autoincrement())
+  fileName      String
+  filePath      String   @unique
+  fileUpdatedAt DateTime
+  fileSize      Int
+  title         String?
+  artist        String?
+  albumArtist   String?
+  releaseTitle  String?
+  trackNumber   String?
+  releasedAt    String?
+  comment       String?
+  genre         String?
+  composer      String?
+  diskNumber    String?
+  track         Track?
+}
+
+model Artist {
+  id        Int       @id @default(autoincrement())
+  name      String
+  imagePath String?
+  releases  Release[]
+  tracks    Track[]
+}
+
+model Genre {
+  id   Int    @id @default(autoincrement())
+  name String
+}
