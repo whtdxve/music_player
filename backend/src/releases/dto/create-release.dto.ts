@@ -1,4 +1,4 @@
-import { IsString, IsOptional, IsNumber, IsDateString } from "class-validator";
+import { IsString, IsOptional, IsNumber, IsDateString, IsBoolean } from "class-validator";
 
 export class CreateReleaseDto {
     @IsString()
@@ -6,4 +6,9 @@ export class CreateReleaseDto {
 
     @IsNumber()
     artistId!: number;
+
+    coverData?: Uint8Array<ArrayBuffer>;
+
+    @IsString()
+    coverType?: string;
 }

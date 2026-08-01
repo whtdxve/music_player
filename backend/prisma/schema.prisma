@@ -14,6 +14,8 @@ datasource db {
 model Release {
   id        Int      @id @default(autoincrement())
   title     String
+  coverData Bytes?
+  coverType String?
   createdAt DateTime @default(now())
   artistId  Int
   artist    Artist   @relation(fields: [artistId], references: [id])
@@ -37,16 +39,21 @@ model Metadata {
   filePath      String   @unique
   fileUpdatedAt DateTime
   fileSize      Int
-  title         String?
-  artist        String?
-  albumArtist   String?
-  releaseTitle  String?
-  trackNumber   String?
-  releasedAt    String?
+  duration      String
+  title         String
+  artist        String
+  albumArtist   String
+  releaseTitle  String
+  trackNo       Int
+  releasedAt    String
+  genre         String
+  trackOf       Int?
+  diskNo        Int?
+  diskOf        Int?
+  coverData     Bytes?
+  coverType     String?
   comment       String?
-  genre         String?
   composer      String?
-  diskNumber    String?
   track         Track?
 }
 

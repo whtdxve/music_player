@@ -39,7 +39,7 @@ export class LibraryService {
         this.logger.log(`Путь к папке с музыкой: ${musicFolderPath}`);
 
         const unindexedFilesPaths = await this.getUnindexedAudioFilesPaths(musicFolderPath);
-        this.logger.log(`Новые пути: ${unindexedFilesPaths}`);
+        this.logger.log(`Новые пути: \n${unindexedFilesPaths.join('\n')}`);
         for (const filePath of unindexedFilesPaths) {
             try {
                 const metadata = await parseFile(filePath);
@@ -50,35 +50,42 @@ export class LibraryService {
                 const artist = metadata.common.artist ?? 'Unkown Artist';                 // TODO: подумать как можно разделять нескольких артистов
                 const albumArtist = metadata.common.albumartist ?? 'Unkown Album Artist'; // TODO: подумать как можно разделять нескольких артистов
                 const releaseTitle = metadata.common.album ?? 'Unkown Album';
-                const trackNo = metadata.common.track.no ? String(metadata.common.track.no) : '';
-                const trackOf = metadata.common.track.of ? String(metadata.common.track.of) : null;
-                const trackNumber = trackOf ? trackNo + '/' + trackOf : trackNo;
+                const trackNo = metadata.common.track.no ? metadata.common.track.no : 0;
+                const trackOf = metadata.common.track.of ? metadata.common.track.of : undefined;
                 const releasedAt = String(metadata.common.year) ?? '00-00-0000';
                 const comments = metadata.common.comment;
                 const comment = comments?.map((comment) => comment.text).join(' | ') ?? '';
                 const genre = String(metadata.common.genre) ?? '';
                 const composer = metadata.common.composer?.join(' | ') ?? '';
-                const diskNo = metadata.common.disk.no ? String(metadata.common.disk.no) : '';
-                const diskOf = metadata.common.disk.of ? String(metadata.common.disk.of) : null;
-                const diskNumber = diskOf ? diskNo + '/' + diskOf : diskNo;
+                const diskNo = metadata.common.disk.no ? metadata.common.disk.no : undefined;
+                const diskOf = metadata.common.disk.of ? metadata.common.disk.of : undefined;
                 const fileUpdatedAt = stats.mtime;
                 const fileSize = stats.size;
+                const picture = metadata.common.picture?.[0];
+                const coverData = picture ? new Uint8Array(picture.data) : undefined;
+                const coverType = picture ? picture.format : undefined;
+                const duration = metadata.format.duration ? await this.formatDuration(metadata.format.duration) : '0:00';
 
                 const CreateMetadataDto: CreateMetadataDto = {
                     fileName: fileName,
                     filePath: filePath,
+                    coverData: coverData,
+                    coverType: coverType,
                     title: title,
                     artist: artist,
                     albumArtist: albumArtist,
                     releaseTitle: releaseTitle,
-                    trackNumber: trackNumber,
+                    trackNo: trackNo,
+                    trackOf: trackOf,
                     releasedAt: releasedAt,
                     comment: comment,
                     genre: genre,
                     composer: composer,
-                    diskNumber: diskNumber,
+                    diskNo: diskNo,
+                    diskOf: diskOf,
                     fileUpdatedAt: fileUpdatedAt,
-                    fileSize: fileSize
+                    fileSize: fileSize,
+                    duration: duration
                 };
 
                 this.metadatasService.create(CreateMetadataDto);
@@ -90,6 +97,12 @@ export class LibraryService {
         }
     }
 
+    private async formatDuration(totalSeconds: number): Promise<string> {
+        const minutes = Math.floor(totalSeconds / 60);
+        const seconds = Math.floor(totalSeconds % 60);
+
+        return `${minutes}:${seconds.toString().padStart(2, '0')}`;
+    }
     // Рекурсивное получение путей к аудиофайлам
     private async getUnindexedAudioFilesPaths(dirPath: string): Promise<string[]> {
         const items = await readdir(dirPath, { withFileTypes: true, recursive: true });
@@ -115,51 +128,51 @@ export class LibraryService {
             const artistName = metadata.albumArtist ?? 'Unkown Artist';
             const trackTitle = metadata.title ?? 'Unkown Title';
             const releaseTitle = metadata.releaseTitle ?? 'Unkown Album';
+            const coverData = metadata.coverData ?? undefined;
+            const coverType = metadata.coverType ?? undefined;
 
-            const artist = await this.artistsService.findArtistByName(artistName);
+            let artist = await this.artistsService.findArtistByName(artistName);
 
-            if(!artist) {
-                const createArtistDto: CreateArtistDto = {
-                    name: artistName
-                };
-                
-                const artist = await this.artistsService.create(createArtistDto);
-                
+            if (!artist) {
+                const createArtistDto: CreateArtistDto = { name: artistName };
+                artist = await this.artistsService.create(createArtistDto);
+
                 this.logger.log(`Создан артист: ${artist.name}`);
             } else {
                 this.logger.log(`Артист ${artist.name} уже есть в БД`);
+            }
 
-                const artistId = artist.id;
-                const release = await this.releasesService.findReleaseByTitleAndArtistId(releaseTitle, artistId);
+            const artistId = artist.id;
+            let release = await this.releasesService.findReleaseByTitleAndArtistId(releaseTitle, artistId);
 
-                if(!release) {
-                    const createReleaseDto: CreateReleaseDto = {
-                        title: releaseTitle,
-                        artistId: artistId,
-                    };
-    
-                    const release = await this.releasesService.create(createReleaseDto);
+            if (!release) {
+                const createReleaseDto: CreateReleaseDto = {
+                    title: releaseTitle,
+                    artistId: artistId,
+                    coverData: coverData,
+                    coverType: coverType
+                };
+                release = await this.releasesService.create(createReleaseDto);
 
-                    this.logger.log(`Создан релиз: ${release.title}`);
-                } else {
-                    this.logger.log(`Релиз ${release.title} уже есть в БД`);
+                this.logger.log(`Создан релиз: ${release.title}`);
+            } else {
+                this.logger.log(`Релиз ${release.title} уже есть в БД`);
+            }
 
-                    const track = await this.tracksService.findTrackByTitleAndArtistId(trackTitle, artistId);
+            const track = await this.tracksService.findTrackByTitleAndArtistId(trackTitle, artistId);
 
-                    if (!track) {
-                        const createTrackDto: CreateTrackDto = {
-                            artistId: artistId,
-                            releaseId: release.id,
-                            metadataId: metadata.id
-                        };
-    
-                        const track = await this.tracksService.create(createTrackDto);
-                        
-                        this.logger.log(`Создан трек: ${trackTitle}`);
-                    } else {
-                        this.logger.log(`Трек ${trackTitle} уже есть в БД`);
-                    }
-                }
+            if (!track) {
+                const createTrackDto: CreateTrackDto = {
+                    artistId: artistId,
+                    releaseId: release.id,
+                    metadataId: metadata.id
+                };
+
+                const track = await this.tracksService.create(createTrackDto);
+
+                this.logger.log(`Создан трек: ${track.metadata.title}`);
+            } else {
+                this.logger.log(`Трек ${trackTitle} уже есть в БД`);
             }
         }
     }

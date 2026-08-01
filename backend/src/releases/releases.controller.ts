@@ -1,11 +1,13 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete } from '@nestjs/common';
+import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Res, NotFoundException } from '@nestjs/common';
 import { ReleasesService } from './releases.service';
 import { CreateReleaseDto } from './dto/create-release.dto';
 import { UpdateReleaseDto } from './dto/update-release.dto';
+import { Request, Response } from 'express';
 
 @Controller('releases')
 export class ReleasesController {
-  constructor(private readonly releasesService: ReleasesService) {}
+  constructor(
+    private readonly releasesService: ReleasesService) {}
 
   @Post()
   create(@Body() createReleaseDto: CreateReleaseDto) {
@@ -13,8 +15,8 @@ export class ReleasesController {
   }
 
   @Get()
-  findAll() {
-    return this.releasesService.findAll();
+  async findAll() {
+    return await this.releasesService.findAll();
   }
 
   @Get(':id')

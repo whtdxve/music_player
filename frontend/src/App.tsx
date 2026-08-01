@@ -1,34 +1,31 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
-import axios from 'axios';
-import { API_URL } from './config';
+import BottomBar from './components/BottomBar/BottomBar';
+import type { Release } from './types/release';
+import Sidebar from './components/Sidebar/Sidebar';
+import ReleaseInfo from './components/ReleaseInfo/ReleaseInfo';
+import AdditionalSidebar from './components/AdditionalSidebar/AdditionalSidebar';
+import { useAudioPlayer } from './context/AudioPlayerContext';
+
 
 function App() {
-  const [releases, setReleases] = useState([]);
-  const [error, setError] = useState('');
-
-  useEffect(() => {
-    axios.get('http://localhost:3000/library')
-      .then((res) => setReleases(res.data))
-      .catch((err) => setError(err.message))
-  }, []);
+  const [isLoading, setIsLoading] = useState(false);
+  const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
+  const [isAdditionalSidebarOpen, setIsAdditionalSidebarOpen] = useState(false);
+  const { queue } = useAudioPlayer();
 
   return (
-    <body>
-      <div className='flex w-200 flex-wrap gap-2'>
-        {releases.map((releases) => (
-          <div className='flex flex-col gap-2'>
-            <img className='w-40' src={`${API_URL}${releases.img}`} />
-            <h2>{releases.album}</h2>
-            <h1>{releases.artist}</h1>
-          </div>
+    <div>
+      <button onClick={() => setIsAdditionalSidebarOpen(true)}>Очередь</button>
+      <Sidebar setIsLoading={setIsLoading} setSelectedRelease={setSelectedRelease} />
+      <ReleaseInfo isLoading={isLoading} selectedRelease={selectedRelease} />
+      <AdditionalSidebar isOpen={isAdditionalSidebarOpen} onClose={() => setIsAdditionalSidebarOpen(false)}>
+        {queue.map((track) => (
+          <div>{track.metadata.title}</div>
         ))}
-        {error}
-      </div>
-      <div>
-
-      </div>
-    </body>
+      </AdditionalSidebar>
+      <BottomBar />
+    </div>
   );
 }
 

@@ -1,4 +1,4 @@
-import { Injectable } from '@nestjs/common';
+import { Injectable, NotFoundException } from '@nestjs/common';
 import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { prisma } from "../../lib/prisma";
@@ -7,7 +7,10 @@ import { TrackResponseDto } from './dto/track-response.dto';
 @Injectable()
 export class TracksService {
   async create(createTrackDto: CreateTrackDto) {
-    const track = await prisma.track.create({ data: createTrackDto });
+    const track = await prisma.track.create({
+      data: createTrackDto,
+      include: { metadata: true }
+    });
     const response = TrackResponseDto.fromEntity(track);
     return response;
   }
@@ -16,8 +19,15 @@ export class TracksService {
     return `This action returns all tracks`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} track`;
+  async findOne(id: number) {
+    const track = await prisma.track.findFirst({
+      where: { id: id },
+      include: { metadata: true }
+    });
+    if (!track) {
+      throw new NotFoundException(`Трек с id ${id} не найден`);
+    }
+    return TrackResponseDto.fromEntity(track);
   }
 
   update(id: number, updateTrackDto: UpdateTrackDto) {

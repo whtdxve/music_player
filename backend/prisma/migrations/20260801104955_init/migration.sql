@@ -2,6 +2,8 @@
 CREATE TABLE "Release" (
     "id" INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
     "title" TEXT NOT NULL,
+    "coverData" BLOB,
+    "coverType" TEXT,
     "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     "artistId" INTEGER NOT NULL,
     CONSTRAINT "Release_artistId_fkey" FOREIGN KEY ("artistId") REFERENCES "Artist" ("id") ON DELETE RESTRICT ON UPDATE CASCADE
@@ -26,16 +28,21 @@ CREATE TABLE "Metadata" (
     "filePath" TEXT NOT NULL,
     "fileUpdatedAt" DATETIME NOT NULL,
     "fileSize" INTEGER NOT NULL,
-    "title" TEXT,
-    "artist" TEXT,
-    "albumArtist" TEXT,
-    "releaseTitle" TEXT,
-    "trackNumber" TEXT,
-    "releasedAt" TEXT,
+    "duration" TEXT NOT NULL,
+    "title" TEXT NOT NULL,
+    "artist" TEXT NOT NULL,
+    "albumArtist" TEXT NOT NULL,
+    "releaseTitle" TEXT NOT NULL,
+    "trackNo" INTEGER NOT NULL,
+    "releasedAt" TEXT NOT NULL,
+    "genre" TEXT NOT NULL,
+    "trackOf" INTEGER,
+    "diskNo" INTEGER,
+    "diskOf" INTEGER,
+    "coverData" BLOB,
+    "coverType" TEXT,
     "comment" TEXT,
-    "genre" TEXT,
-    "composer" TEXT,
-    "diskNumber" TEXT
+    "composer" TEXT
 );
 
 -- CreateTable

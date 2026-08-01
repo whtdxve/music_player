@@ -19,4 +19,7 @@ fi
 echo "🔄 Создаю новую миграцию по текущей schema.prisma и применяю к чистой БД..."
 npx prisma migrate dev --name "$MIGRATION_NAME"
 
+echo "🔄 Генерирую клиент призмы"
+npx prisma generate
+
 echo "🎉 Готово! База данных пересоздана с чистой историей миграций (миграция: $MIGRATION_NAME)."
