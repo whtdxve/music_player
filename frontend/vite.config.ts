@@ -9,6 +9,9 @@ export default defineConfig({
     tailwindcss()
   ],
   server: {
+    allowedHosts: [
+      'emblem-outscore-unharmed.ngrok-free.dev',
+    ],
     proxy: {
       '/api': 'http://localhost:3000',
     },

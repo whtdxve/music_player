@@ -1,10 +1,10 @@
 import { createRoot } from 'react-dom/client'
 import './index.css'
 import App from './App.tsx'
-import { AudioPlayerProvider } from './context/AudioPlayerContext';
+import { GlobalProviders } from './providers/AppProviders.tsx';
 
 createRoot(document.getElementById('root')!).render(
-  <AudioPlayerProvider>
+  <GlobalProviders>
     <App />
-  </AudioPlayerProvider>,
+  </GlobalProviders>,
 );
