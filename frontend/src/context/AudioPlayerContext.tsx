@@ -3,8 +3,7 @@ import { createContext, useContext, useRef, useState, useEffect, type ReactNode 
 import type { Track } from '../types/track';
 import { API_URL } from '../config';
 import type { TrackSource } from '../types/trackSource';
-import type { TrackSourceType } from '../types/trackSource';
-import type { Release } from '../types/release';
+import { Player } from '../lib/Player';
 
 interface AudioPlayerContextType {
     currentTrack: Track | null;
@@ -15,10 +14,10 @@ interface AudioPlayerContextType {
     queue: Track[];
     trackSource: TrackSource | null;
     setTrackSource: (source: TrackSource | null) => void;
-    playTrack: (track: Track, release: Release) => void;
+    playTrack: (track: Track, source: TrackSource) => Promise<void>;
     togglePlay: () => void;
-    next: () => void;
-    prev: () => void;
+    next: () => Promise<void>;
+    prev: () => Promise<void>;
     seek: (time: number) => void;
     setVolume: (value: number) => void;
 }
@@ -26,142 +25,78 @@ interface AudioPlayerContextType {
 const AudioPlayerContext = createContext<AudioPlayerContextType | null>(null);
 
 export function AudioPlayerProvider({ children }: { children: ReactNode }) {
-    const currentAudioRef = useRef<HTMLAudioElement | null>(null);
-    const nextAudioRef = useRef<HTMLAudioElement | null>(null);
-
-    const currentIndexRef = useRef(0);
-    const queueRef = useRef<Track[]>([]);
-    const nextTrackRef = useRef<Track | null>(null);
-    const trackSourceRef = useRef<TrackSource | null>(null);
-
-    const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
-    const [currentIndex, setCurrentIndex] = useState(0);
+    const playerRef = useRef<Player | null>(null);
     const [queue, setQueue] = useState<Track[]>([]);
-    const [isPlaying, setIsPlaying] = useState(false);
+    const [currentTrack, setCurrentTrack] = useState<Track | null>(null);
     const [currentTime, setCurrentTime] = useState(0);
     const [duration, setDuration] = useState(0);
+    const [isPlaying, setIsPlaying] = useState(false);
     const [volume, setVolumeState] = useState(1);
     const [trackSource, setTrackSource] = useState<TrackSource | null>(null);
 
-    // Создаем два аудио элемента при рендере компонента
     useEffect(() => {
-        const currentAudio = new Audio();
-        const nextAudio = new Audio();
-        currentAudioRef.current = currentAudio;
-        nextAudioRef.current = nextAudio;
-
-        currentAudio.addEventListener('timeupdate', () => setCurrentTime(currentAudio.currentTime));
-        currentAudio.addEventListener('loadedmetadata', () => setDuration(currentAudio.duration));
-        currentAudio.addEventListener('ended', () => next());
-
-        return () => {
-            currentAudio.pause();
-            currentAudio.src = '';
-        };
+        const player = new Player();
+        player.setVolume(volume);
+        playerRef.current = player;
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
-    const playTrack = (track: Track, release: Release = null) => {
-        if (release) {
-            const newTrackSource = {
-                type: 'RELEASE' as const,
-                name: release.title,
-                id: release.id,
-                tracks: release.tracks!
-            };
-            setTrackSource(newTrackSource);
-            trackSourceRef.current = newTrackSource;
-            queueRef.current = newTrackSource.tracks;
-            console.log('Установлена новая очередь: ', queueRef.current);
-        };
+    // Опрос состояния плеера каждые 250мс — обновляем currentTime/duration/currentTrack
+    useEffect(() => {
+        const interval = setInterval(() => {
+            const player = playerRef.current;
+            if (!player) return;
 
-        console.log('Текущий трек: ', track);
-        const currentQueue = queueRef.current;
-        const audio = currentAudioRef.current;
+            setCurrentTime(player.getCurrentTime());
+            setDuration(player.getDuration());
 
-        const index = currentQueue.indexOf(track);
-        console.log('Индекс текущего трека в массиве очереди: ', index);
+            const index = player.getCurrentIndex();
+            if (queue[index] && queue[index].id !== currentTrack?.id) {
+                setCurrentTrack(queue[index]);
+            }
+        }, 250);
+
+        return () => clearInterval(interval);
+    }, [queue, currentTrack]);
+
+    const playTrack = async (track: Track, source: TrackSource) => {
+        setTrackSource(source);
+        setQueue(source.tracks);
+
+        const urls = source.tracks.map(t => `${API_URL}/tracks/${t.id}/stream`);
+        playerRef.current?.setQueue(urls);
+
+        const index = source.tracks.findIndex(t => t.id === track.id);
+        await playerRef.current?.playAt(index);
+
         setCurrentTrack(track);
-        console.log('Текущий индекс в состоянии: ', currentIndex);
-
-        currentIndexRef.current = index;
-
-        if (currentIndex < currentQueue.length - 1) {
-            nextTrackRef.current = currentQueue[index + 1];
-            preloadNextTrack();
-        } else {
-            nextTrackRef.current = null;
-        }
-
-        // if (nextAudioRef.current) {
-        //     audio.pause();
-        //     audio.src = nextAudioRef.current.src;
-        //     audio.currentTime = nextAudioRef.current.currentTime; // подхватываем позицию буферизации
-        //     nextAudioRef.current = null; // сброс — использовали предзагруженный
-        // } else {
-        audio.src = `${API_URL}/tracks/${track.id}/stream`;
-        // }
-
-        audio.play();
         setIsPlaying(true);
     };
 
-    const preloadNextTrack = () => {
-        const preloadAudio = new Audio();
-        preloadAudio.src = `${API_URL}/tracks/${nextTrackRef.current!.id}/stream`;
-        preloadAudio.preload = 'auto'; // явно просим браузер загружать сразу
-        nextAudioRef.current = preloadAudio;
+    const next = async () => {
+        await playerRef.current?.next();
+    };
+
+    const prev = async () => {
+        await playerRef.current?.prev();
     };
 
     const togglePlay = () => {
-        const audio = currentAudioRef.current;
-        if (!audio || !currentTrack) return;
-
         if (isPlaying) {
-            audio.pause();
+            playerRef.current?.pause();
         } else {
-            audio.play();
+            playerRef.current?.resume();
         }
         setIsPlaying(!isPlaying);
     };
 
-    const next = () => {
-        const audio = nextAudioRef.current;
-        audio?.play();
-        if (audio) {
-            console.log('readyState:', audio.readyState); // 0-4, где 4 = полностью готов
-            console.log('buffered:', audio.buffered.length > 0 ? audio.buffered.end(0) : 0);
-            console.log('duration:', audio.duration);
-            audio.play();
-        }
-        // const nextIndex = currentIndexRef.current + 1;
-        // const nextTrack = queueRef.current[nextIndex];
-        // if (nextTrack) {
-        //     playTrack(nextTrack);
-        // } else {
-        //     setIsPlaying(false);
-        // }
-    };
-
-    const prev = () => {
-        if (!currentTrack) return;
-        const prevIndex = currentIndexRef.current - 1;
-        const prevTrack = queueRef.current[prevIndex];
-        if (prevTrack) {
-            playTrack(prevTrack);
-        }
-    };
-
     const seek = (time: number) => {
-        if (currentAudioRef.current) {
-            currentAudioRef.current.currentTime = time;
-            setCurrentTime(time);
-        }
+        playerRef.current?.seek(time);
+        setCurrentTime(time); // сразу обновляем UI, не дожидаясь следующего опроса
     };
 
     const setVolume = (value: number) => {
-        if (currentAudioRef.current) {
-            currentAudioRef.current.volume = value;
-        }
+        playerRef.current?.setVolume(value);
         setVolumeState(value);
     };
 
@@ -169,19 +104,19 @@ export function AudioPlayerProvider({ children }: { children: ReactNode }) {
         <AudioPlayerContext.Provider
             value={{
                 currentTrack,
-                isPlaying,
                 currentTime,
                 duration,
+                isPlaying,
                 queue,
                 volume,
+                trackSource,
+                setTrackSource,
                 playTrack,
-                togglePlay,
                 next,
                 prev,
+                togglePlay,
                 seek,
                 setVolume,
-                trackSource,
-                setTrackSource
             }}
         >
             {children}
