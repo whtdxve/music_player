@@ -46,7 +46,7 @@ export class TracksController {
     return this.tracksService.remove(+id);
   }
 
-  @Get(':id/stream')
+  @Get(':id/stream') // TODO: перенести в сервис!!!!!
   async streamTrack(
     @Param('id') id: string,
     @Req() req: Request,

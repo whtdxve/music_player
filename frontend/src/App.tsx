@@ -1,25 +1,32 @@
-import { useState } from 'react'
 import './App.css'
 import BottomBar from './components/BottomBar/BottomBar';
-import type { Release } from './types/release';
 import Sidebar from './components/Sidebar/Sidebar';
-import ReleaseInfo from './components/ReleaseInfo/ReleaseInfo';
 import AdditionalSidebar from './components/AdditionalSidebar/AdditionalSidebar';
 import { useAudioPlayer } from './context/AudioPlayerContext';
+import MainContent from './components/MainContent/MainContent';
+import { useApp } from './context/AppContext';
 
 
 function App() {
-  const [isLoading, setIsLoading] = useState(false);
-  const [selectedRelease, setSelectedRelease] = useState<Release | null>(null);
-  const [isAdditionalSidebarOpen, setIsAdditionalSidebarOpen] = useState(false);
   const { queue } = useAudioPlayer();
-
+  const { isAdditionalSidebarOpen, setIsAdditionalSidebarOpen } = useApp();
+  /* 
+  TODO: 
+  - сделать общий тип/интерфейс (понять в чем разница) mainContent для отображения контента 
+  в главном блоке, который будет объединять выбранный сейчас релиз, плейлист или артиста.
+  - сделать правильную логику с выбором текущего источника треков, сделать так чтобы при нажатии на трек
+  в источнике треков, формировался объект trackSource и сохранялся в состояние и при переключении трека
+  очередь не сохранялась в состояние заново, а чтобы была правильная логика понимания какой трек из очереди сейчас играет.
+  */
   return (
     <div>
       <button onClick={() => setIsAdditionalSidebarOpen(true)}>Очередь</button>
-      <Sidebar setIsLoading={setIsLoading} setSelectedRelease={setSelectedRelease} />
-      <ReleaseInfo isLoading={isLoading} selectedRelease={selectedRelease} />
-      <AdditionalSidebar isOpen={isAdditionalSidebarOpen} onClose={() => setIsAdditionalSidebarOpen(false)}>
+      <Sidebar />
+      <MainContent />
+      <AdditionalSidebar
+        isOpen={isAdditionalSidebarOpen}
+        onClose={() => setIsAdditionalSidebarOpen(false)}
+      >
         {queue.map((track) => (
           <div>{track.metadata.title}</div>
         ))}

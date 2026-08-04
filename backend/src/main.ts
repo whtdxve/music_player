@@ -10,7 +10,7 @@ async function bootstrap() {
   app.setBaseViewsDir(join(__dirname, '..', 'views'));
   app.useStaticAssets(join(__dirname, '..', 'public'));
   app.enableCors({
-    origin: 'http://localhost:5173',
+    origin: 'http://localhost:5173'
   });
   app.setViewEngine('hbs');
 
