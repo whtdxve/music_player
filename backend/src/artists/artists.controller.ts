@@ -5,7 +5,7 @@ import { UpdateArtistDto } from './dto/update-artist.dto';
 
 @Controller('artists')
 export class ArtistsController {
-  constructor(private readonly artistsService: ArtistsService) {}
+  constructor(private readonly artistsService: ArtistsService) { }
 
   @Post()
   create(@Body() createArtistDto: CreateArtistDto) {
@@ -30,5 +30,20 @@ export class ArtistsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.artistsService.remove(+id);
+  }
+
+  @Get(':id/tracks')
+  findArtistTracks(@Param('id') id: string) {
+    return this.artistsService.findArtistTracks(+id);
+  }
+
+  @Get(':id/albums')
+  findArtistAlbums(@Param('id') id: string) {
+    return this.artistsService.findArtistAlbums(+id);
+  }
+
+  @Get(':id/singles')
+  findArtistSingles(@Param('id') id: string) {
+    return this.artistsService.findArtistSingles(+id);
   }
 }

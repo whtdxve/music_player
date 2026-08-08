@@ -51,19 +51,19 @@ export class LibraryService {
                 const albumArtist = metadata.common.albumartist ?? 'Unkown Album Artist'; // TODO: подумать как можно разделять нескольких артистов
                 const releaseTitle = metadata.common.album ?? 'Unkown Album';
                 const trackNo = metadata.common.track.no ? metadata.common.track.no : 0;
-                const trackOf = metadata.common.track.of ? metadata.common.track.of : undefined;
+                const trackOf = metadata.common.track.of ? metadata.common.track.of : null;
                 const releasedAt = String(metadata.common.year) ?? '00-00-0000';
                 const comments = metadata.common.comment;
                 const comment = comments?.map((comment) => comment.text).join(' | ') ?? '';
                 const genre = String(metadata.common.genre) ?? '';
                 const composer = metadata.common.composer?.join(' | ') ?? '';
-                const diskNo = metadata.common.disk.no ? metadata.common.disk.no : undefined;
-                const diskOf = metadata.common.disk.of ? metadata.common.disk.of : undefined;
+                const diskNo = metadata.common.disk.no ? metadata.common.disk.no : null;
+                const diskOf = metadata.common.disk.of ? metadata.common.disk.of : null;
                 const fileUpdatedAt = stats.mtime;
                 const fileSize = stats.size;
                 const picture = metadata.common.picture?.[0];
-                const coverData = picture ? new Uint8Array(picture.data) : undefined;
-                const coverType = picture ? picture.format : undefined;
+                const coverData = picture ? new Uint8Array(picture.data) : null;
+                const coverType = picture ? picture.format : null;
                 const duration = metadata.format.duration ? await this.formatDuration(metadata.format.duration) : '0:00';
 
                 const CreateMetadataDto: CreateMetadataDto = {
@@ -128,13 +128,16 @@ export class LibraryService {
             const artistName = metadata.albumArtist ?? 'Unkown Artist';
             const trackTitle = metadata.title ?? 'Unkown Title';
             const releaseTitle = metadata.releaseTitle ?? 'Unkown Album';
-            const coverData = metadata.coverData ?? undefined;
-            const coverType = metadata.coverType ?? undefined;
+            const coverData = metadata.coverData ?? null;
+            const coverType = metadata.coverType ?? null;
 
             let artist = await this.artistsService.findArtistByName(artistName);
 
             if (!artist) {
-                const createArtistDto: CreateArtistDto = { name: artistName };
+                const createArtistDto: CreateArtistDto = { 
+                    name: artistName,
+                    imagePath: null
+                 };
                 artist = await this.artistsService.create(createArtistDto);
 
                 this.logger.log(`Создан артист: ${artist.name}`);
@@ -170,7 +173,7 @@ export class LibraryService {
 
                 const track = await this.tracksService.create(createTrackDto);
 
-                this.logger.log(`Создан трек: ${track.metadata.title}`);
+                this.logger.log(`Создан трек: ${track.metadata?.title}`);
             } else {
                 this.logger.log(`Трек ${trackTitle} уже есть в БД`);
             }

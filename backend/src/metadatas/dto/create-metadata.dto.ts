@@ -15,22 +15,22 @@ export class CreateMetadataDto {
 
     @IsString()
     duration!: string;
-    
-    @IsString()
+
+    @IsNumber()
     trackNo!: number;
-    
+
     @IsString()
     title!: string;
-    
+
     @IsString()
     artist!: string;
-    
+
     @IsString()
     albumArtist!: string;
-    
+
     @IsString()
     releaseTitle!: string;
-    
+
     @IsString()
     releasedAt!: string;
 
@@ -40,27 +40,28 @@ export class CreateMetadataDto {
 
     @IsString()
     @IsOptional()
-    trackOf?: number;
-    
-    @IsString()
-    @IsOptional()
-    comment?: string;
-    
-    @IsString()
-    @IsOptional()
-    composer?: string;
-    
-    @IsString()
-    @IsOptional()
-    diskNo?: number;
-    
-    @IsString()
-    @IsOptional()
-    diskOf?: number;
+    trackOf?: number | null;
 
-    coverData?: Uint8Array<ArrayBuffer>;
-    
     @IsString()
     @IsOptional()
-    coverType?: string;
+    comment?: string | null;
+
+    @IsString()
+    @IsOptional()
+    composer?: string | null;
+
+    @IsString()
+    @IsOptional()
+    diskNo?: number | null;
+
+    @IsString()
+    @IsOptional()
+    diskOf?: number | null;
+
+    @IsOptional()
+    coverData?: Uint8Array<ArrayBuffer> | null;
+
+    @IsString()
+    @IsOptional()
+    coverType?: string | null;
 }

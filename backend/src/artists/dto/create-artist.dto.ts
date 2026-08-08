@@ -6,5 +6,5 @@ export class CreateArtistDto {
 
     @IsOptional()
     @IsString()
-    imagePath?: string;
+    imagePath?: string | null;
 }

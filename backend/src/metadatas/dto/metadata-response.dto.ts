@@ -1,4 +1,6 @@
+import { plainToInstance } from "class-transformer";
 import { IsNumber, IsString, IsOptional } from "class-validator";
+import { Prisma } from "generated/prisma/client";
 
 export class MetadataResponseDto {
     @IsNumber()
@@ -16,6 +18,9 @@ export class MetadataResponseDto {
     @IsString()
     artist!: string;
 
+    @IsNumber()
+    fileSize!: number;
+
     @IsString()
     albumArtist!: string;
 
@@ -26,46 +31,46 @@ export class MetadataResponseDto {
     trackNo!: number;
 
     @IsString()
-    @IsOptional()
-    trackOf?: number;
-
-    @IsString()
     releasedAt!: string;
 
     @IsString()
     genre!: string;
 
     @IsString()
-    @IsOptional()
-    comment?: string;
+    duration!: string;
 
     @IsString()
     @IsOptional()
-    composer?: string;
+    trackOf?: number | null;
 
     @IsString()
     @IsOptional()
-    diskNo?: number;
+    comment?: string | null;
 
     @IsString()
     @IsOptional()
-    diskOf?: number;
+    composer?: string | null;
 
     @IsString()
     @IsOptional()
-    duration?: string;
-
-    @IsOptional()
-    coverData?: Uint8Array<ArrayBuffer>;
+    diskNo?: number | null;
 
     @IsString()
     @IsOptional()
-    coverType?: string;
+    diskOf?: number | null;
+
+    @IsOptional()
+    coverData?: Uint8Array<ArrayBuffer> | null;
+
+    @IsString()
+    @IsOptional()
+    coverType?: string | null;
 
     static fromEntity(metadata: {
         id: number;
         fileName: string;
         filePath: string;
+        fileSize: number;
         title: string;
         artist: string;
         albumArtist: string;
@@ -74,19 +79,20 @@ export class MetadataResponseDto {
         genre: string;
         duration: string;
         trackNo: number;
-        trackOf?: number;
-        diskNo?: number;
-        diskOf?: number;
+        trackOf?: number | null;
+        diskNo?: number | null;
+        diskOf?: number | null;
         comment?: string | null;
         composer?: string | null;
         diskNumber?: string | null;
-        coverData?: Uint8Array<ArrayBuffer>;
-        coverType?: string;
+        coverData?: Uint8Array<ArrayBuffer> | null;
+        coverType?: string | null;
     }): MetadataResponseDto {
         return {
             id: metadata.id,
             fileName: metadata.fileName,
             filePath: metadata.filePath,
+            fileSize: metadata.fileSize,
             coverData: metadata.coverData,
             coverType: metadata.coverType,
             title: metadata.title,
@@ -96,12 +102,12 @@ export class MetadataResponseDto {
             trackNo: metadata.trackNo,
             releasedAt: metadata.releasedAt,
             genre: metadata.genre,
-            trackOf: metadata.trackOf ?? undefined,
-            diskNo: metadata.diskNo ?? undefined,
-            diskOf: metadata.diskOf ?? undefined,
-            comment: metadata.comment ?? undefined,
-            composer: metadata.composer ?? undefined,
-            duration: metadata.duration ?? undefined
+            trackOf: metadata.trackOf ?? null,
+            diskNo: metadata.diskNo ?? null,
+            diskOf: metadata.diskOf ?? null,
+            comment: metadata.comment ?? null,
+            composer: metadata.composer ?? null,
+            duration: metadata.duration ?? null
         };
     }
 }

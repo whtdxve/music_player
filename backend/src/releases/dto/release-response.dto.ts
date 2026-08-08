@@ -1,4 +1,9 @@
-import { IsString, IsOptional, IsNumber, IsDateString, IsBoolean } from "class-validator";
+import { Type } from "class-transformer";
+import { IsString, IsOptional, IsNumber, IsDateString, IsBoolean, ValidateNested } from "class-validator";
+import { Prisma } from "generated/prisma/client";
+import { ArtistResponseDto } from "src/artists/dto/artist-response.dto";
+import { TrackResponseDto } from "src/tracks/dto/track-response.dto";
+import { plainToInstance } from 'class-transformer';
 
 export class ReleaseResponseDto {
     @IsNumber()
@@ -10,33 +15,40 @@ export class ReleaseResponseDto {
     @IsNumber()
     artistId!: number;
 
-    coverData?: Uint8Array<ArrayBuffer>;
-
     @IsString()
-    cover?: string;
+    @IsOptional()
+    cover?: string | null;
 
-    artist: any
+    @ValidateNested()
+    @Type(() => ArtistResponseDto)
+    @IsOptional()
+    artist?: ArtistResponseDto | null
 
-    tracks: any
+    @ValidateNested({ each: true })
+    @Type(() => TrackResponseDto)
+    @IsOptional()
+    tracks?: TrackResponseDto[] | null
 
     static fromEntity(release: {
         id: number;
         title: string;
-        artistId: number,
-        coverData?: Uint8Array<ArrayBuffer> | null,
-        coverType?: string | null,
-        artist?: any,
-        tracks?: any
-    }): ReleaseResponseDto {
+        artistId: number;
+        coverData?: Uint8Array<ArrayBuffer> | null;
+        coverType?: string | null;
+        artist?: any;
+        tracks?: any;
+    }) {
+        const cover = release.coverData
+            ? `data:${release.coverType};base64,${Buffer.from(release.coverData).toString('base64')}`
+            : undefined;
+
         return {
             id: release.id,
             title: release.title,
             artistId: release.artistId,
-            cover: release.coverData
-                ? `data:${release.coverType};base64,${Buffer.from(release.coverData).toString('base64')}`
-                : undefined,
-            artist: release.artist,
-            tracks: release.tracks
-        };
+            cover,
+            artist: release.artist ? ArtistResponseDto.fromEntity(release.artist) : null,
+            tracks: release.tracks ? release.tracks.map(t => TrackResponseDto.fromEntity(t)) : null
+        }
     }
 }

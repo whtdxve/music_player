@@ -4,8 +4,12 @@ import axios from "axios";
 import { API_URL } from "../../../config";
 import type { Release } from "../../../types/release";
 import type { Track } from "../../../types/track";
+import type { TrackSource } from "../../../types/trackSource";
+import { useApp } from "../../../context/AppContext";
+import type { ContentSource } from "../../../types/contentSource";
 
 function ReleaseView({ releaseId }: { releaseId: number }) {
+    const { setContentSource } = useApp();
     const { playTrack } = useAudioPlayer();
     const [release, setRelease] = useState<Release | null>(null);
     const [isLoading, setIsLoading] = useState(false);
@@ -22,7 +26,21 @@ function ReleaseView({ releaseId }: { releaseId: number }) {
     }, [releaseId]);
 
     const handlePlayClick = (track: Track, release: Release) => {
-        playTrack(track, release);
+        const trackSource: TrackSource = {
+            type: 'RELEASE',
+            name: release.title,
+            id: release.id,
+            tracks: release.tracks
+        };
+        playTrack(track, trackSource);
+    }
+
+    const handleArtistClick = (artistId: number) => {
+        const contentSource: ContentSource = {
+            type: 'ARTIST',
+            id: artistId
+        }
+        setContentSource(contentSource);
     }
 
     return (
@@ -33,7 +51,7 @@ function ReleaseView({ releaseId }: { releaseId: number }) {
                 <div>
                     <img src={release?.cover} />
                     <p>{release?.title}</p>
-                    <div>{release?.artist?.name}</div>
+                    <div className="link" onClick={() => handleArtistClick(release?.artist?.id)}>{release?.artist?.name}</div>
                     <div className='flex flex-col gap-2'>
                         {release?.tracks?.map((track) => (
                             <div key={track.id} onClick={() => handlePlayClick(track, release)} className='cursor-pointer bg-gray-200 hover:bg-gray-300 rounded-md p-2 grid grid-cols-[2rem_1fr_1fr] grid-rows-2 h-14'>
@@ -52,7 +70,3 @@ function ReleaseView({ releaseId }: { releaseId: number }) {
 }
 
 export default ReleaseView
-
-function setCurrentTrack(track: Track) {
-    throw new Error("Function not implemented.");
-}

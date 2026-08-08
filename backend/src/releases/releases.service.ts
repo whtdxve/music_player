@@ -48,8 +48,4 @@ export class ReleasesService {
     });
     return release ? ReleaseResponseDto.fromEntity(release) : null;
   }
-
-  async getReleaseCover(id: number) {
-
-  }
 }

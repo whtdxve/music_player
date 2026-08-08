@@ -2,6 +2,7 @@ import { Controller, Get, Post, Body, Patch, Param, Delete, Req, Res, NotFoundEx
 import { ReleasesService } from './releases.service';
 import { CreateReleaseDto } from './dto/create-release.dto';
 import { UpdateReleaseDto } from './dto/update-release.dto';
+import { ReleaseResponseDto } from './dto/release-response.dto';
 
 @Controller('releases')
 export class ReleasesController {
@@ -14,7 +15,7 @@ export class ReleasesController {
   }
 
   @Get()
-  async findAll() {
+  async findAll(): Promise<ReleaseResponseDto[]> {
     return await this.releasesService.findAll();
   }
 

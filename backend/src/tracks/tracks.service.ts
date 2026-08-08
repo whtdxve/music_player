@@ -3,6 +3,8 @@ import { CreateTrackDto } from './dto/create-track.dto';
 import { UpdateTrackDto } from './dto/update-track.dto';
 import { prisma } from "../../lib/prisma";
 import { TrackResponseDto } from './dto/track-response.dto';
+import { isFloat16Array } from 'util/types';
+import { parseFile } from 'music-metadata';
 
 @Injectable()
 export class TracksService {
@@ -42,12 +44,33 @@ export class TracksService {
     const track = await prisma.track.findFirst({
       where: {
         artistId: artistId,
-        metadata: {
-          title: title
-        }
-      }
+        metadata: { title: title }
+      },
+      include: { metadata: true }
     });
-    const response = track ? TrackResponseDto.fromEntity(track) : null;
-    return response;
+    return track ? TrackResponseDto.fromEntity(track) : null;
+  }
+
+  async getCover(id: number): Promise<string | null> {
+    const track = await prisma.track.findFirst({
+      where: { id: id },
+      include: { metadata: true }
+    });
+
+    if (!track) {
+      return null;
+    }
+
+    const filePath = track.metadata.filePath;
+    const metadata = await parseFile(filePath);
+    const picture = metadata.common.picture?.[0];
+    if (picture) {
+      const coverData = new Uint8Array(picture.data);
+      const coverType = picture.format;
+      const cover = `data:${coverType};base64,${Buffer.from(coverData).toString('base64')}`
+      return cover;
+    } else {
+      return null
+    }
   }
 }
