@@ -1,21 +1,25 @@
 import { IsNumber, IsOptional, IsString } from "class-validator";
 
 export class ArtistResponseDto {
-    @IsNumber()
-    id!: number;
+  @IsNumber()
+  id!: number;
 
-    @IsString()
-    name!: string;
+  @IsString()
+  name!: string;
 
-    @IsString()
-    @IsOptional()
-    image?: string;
+  @IsString()
+  @IsOptional()
+  imagePath?: string | null;
 
-    static fromEntity(artist: { id: number; name: string; imagePath: string | null }): ArtistResponseDto {
+  static fromEntity(artist: {
+    id: number;
+    name: string;
+    imagePath: string | null
+  }): ArtistResponseDto {
     return {
       id: artist.id,
       name: artist.name,
-      image: artist.imagePath ?? undefined,
+      imagePath: artist.imagePath ?? null,
     };
   }
 }

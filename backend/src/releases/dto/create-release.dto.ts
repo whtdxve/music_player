@@ -7,8 +7,8 @@ export class CreateReleaseDto {
     @IsNumber()
     artistId!: number;
 
-    coverData?: Uint8Array<ArrayBuffer>;
+    coverData?: Uint8Array<ArrayBuffer> | null;
 
     @IsString()
-    coverType?: string;
+    coverType?: string | null;
 }

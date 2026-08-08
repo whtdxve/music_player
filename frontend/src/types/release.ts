@@ -5,6 +5,8 @@ export interface Release {
     id: number;
     title: string;
     cover?: string;
+    releasedAt?: string;
+    tracksCount?: number;
     artist?: Artist;
     tracks?: Track[];
 }

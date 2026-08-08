@@ -46,7 +46,7 @@ export class TracksController {
     return this.tracksService.remove(+id);
   }
 
-  @Get(':id/stream') // TODO: перенести в сервис!!!!!
+  @Get(':id/stream')
   async streamTrack(
     @Param('id') id: string,
     @Req() req: Request,
@@ -55,7 +55,7 @@ export class TracksController {
     const track = await this.tracksService.findOne(+id);
 
     const filePath = track.metadata.filePath;
-    const fileSize = track.metadata.fileSize;
+    const fileSize = track.metadata?.fileSize;
     const range = req.headers.range;
     const mimeType = MIME_TYPES[extname(filePath).toLowerCase()] ?? 'audio/mpeg';
 
